@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<RootNamespace>DocumentQuestions.Library</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="Prompts\AskQuestions.yaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Azure.AI.Agents.Persistent" Version="1.2.0-beta.7" />
+		<PackageReference Include="Azure.AI.DocumentIntelligence" Version="1.0.0" />
+		<PackageReference Include="Azure.AI.OpenAI" Version="2.5.0-beta.1" />
+		<PackageReference Include="Azure.AI.Projects" Version="1.1.0" />
+		<PackageReference Include="Azure.Identity" Version="1.17.0" />
+		<PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.3.0" />
+		<PackageReference Include="Azure.Search.Documents" Version="11.7.0" />
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.26.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.4" />
+		<PackageReference Include="Microsoft.Agents.AI" Version="1.0.0-preview.251028.1" />
+		<PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="1.0.0-preview.251028.1" />
+		<PackageReference Include="Microsoft.Agents.AI.AzureAI" Version="1.0.0-preview.251028.1" />
+		<PackageReference Include="Microsoft.Extensions.AI" Version="9.10.1" />
+		<PackageReference Include="OpenAI" Version="2.5.0" />
+		<PackageReference Include="Microsoft.Azure.Cosmos" Version="3.38.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.4" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="Prompts\**\*.yaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Remove="AgentThreadPrinter.cs" />
+	</ItemGroup>
+</Project>

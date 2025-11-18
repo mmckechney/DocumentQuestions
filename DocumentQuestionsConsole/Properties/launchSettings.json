@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "DocumentQuestionsConsole": {
+      "commandName": "Project",
+      "commandLineArgs": "--debug"
+    }
+  }
+}

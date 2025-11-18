@@ -1,0 +1,30 @@
+name: XmlToMdExtraction
+description: Extract content from an XML document and convert it to markdown
+template: |
+  <message role="system"> 
+  You will be given an XML document that has HTML embedded in it. 
+  Your task will be to identify the HTML content in the document and convert it to markdown.
+  
+  Do not add anything to the content, don't make anything up.
+
+  </message>
+  <message role="user">
+    {{content}}
+  </message>
+template_format: handlebars
+input_variables: 
+ - name: content
+   description: Document content
+   is_required: true
+execution_settings:
+  default: 
+    max_tokens: 3500
+    temperature: 0.9
+  gpt-4-turbo:
+    model_id:     gpt-4-1106-preview
+    max_tokens:   3500
+    temperature:  0.9
+  gpt-4-32k:
+    model_id:     gpt-4-32k
+    max_tokens:   3500
+    temperature:  0.9

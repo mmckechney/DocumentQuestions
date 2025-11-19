@@ -1,9 +1,9 @@
-# Agent Framework and Azure AI Foundry: Ask Questions on your document
+# Semantic Kernel and Azure OpenAI: Ask Questions on your document
 
 
 ## Overview
 
-This solution provides an example of how to process your own documents and then use [Azure AI Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/what-is-azure-ai-foundry) and [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview) to ask question specific to that document.
+This solution provides an example of how to process your own documents and then use [Azure AI Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/what-is-azure-ai-foundry) and [Microsoft Agent Framework]https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview) to ask question specific to that document.
 
 **NOTE**: The console app is also provided to demonstrate how to use the AI Foundry and the Agent Framework to ask questions of an AI Agent.
 
@@ -58,13 +58,11 @@ azd up
 If successful, this process will create:
 
 - Storage account with two blob containers (`raw` for uploaded documents and `extracted` for processed output)
-- Application Insights instance
-- Function app with 3 functions with system assigned managed identity
-  - Role assigment for the function identity to access blob storage and call Azure OpenAI
-- Azure Cognitive Services account with system assigned managed identity
+- A Microsoft Foundry resource and project, with a `gpt-5-mini` and `text_embedding_3_large` deployments and a system assigned managed identiy
   - Role assigment for Cognitive Services identity for read access to `raw` container and write access to `extracted` container
-- Azure Cogitive Search account
-- *In addition, it will configure, compile and start the demo console app.*
+- Azure Cognitive Search account
+- Azure Document Intelligence Account
+
   
 
 

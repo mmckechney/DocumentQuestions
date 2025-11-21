@@ -73,8 +73,8 @@ namespace DocumentQuestions.Console
              .ConfigureLogging(logging =>
              {
                 logging.SetMinimumLevel(level);
-                //logging.AddFilter("System", LogLevel.Warning);
-                //logging.AddFilter("Microsoft", LogLevel.Warning);
+                logging.AddFilter("System", LogLevel.Warning);
+                logging.AddFilter("Microsoft", LogLevel.Warning);
                 if (!string.IsNullOrWhiteSpace(connectionString))
                 {
                    logging.AddOpenTelemetry(options =>
@@ -100,8 +100,6 @@ namespace DocumentQuestions.Console
                services.AddSingleton<AgentUtility>();
                services.AddSingleton<DocumentIntelligence>();
                services.AddSingleton<AiSearch>();
-               services.AddSingleton<LocalToolsLibrary>();
-               services.AddSingleton<LocalToolsUtility>();
                services.AddSingleton(sp =>
                {
                   var config = sp.GetRequiredService<IConfiguration>();

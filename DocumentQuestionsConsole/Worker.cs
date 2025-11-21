@@ -1,14 +1,10 @@
-﻿using Azure.AI.Agents.Persistent;
-using DocumentQuestions.Library;
+﻿using DocumentQuestions.Library;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Identity.Client;
 using System.CommandLine.Parsing;
-using System.Diagnostics;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text;
 using syS = System;
 
@@ -26,13 +22,11 @@ namespace DocumentQuestions.Console
       private static DocumentIntelligence documentIntelligence;
       private static string activeDocument = string.Empty;
       private static AiSearch aiSearch;
-      private static PersistentAgentThread? currentThread = null; // Thread for multi-turn conversations
-      private static LocalToolsUtility localToolsUtility;
-      private static LocalToolsLibrary localToolsLibrary;
+      private static AgentThread? currentThread = null; // Thread for multi-turn conversations
 
 
 
-      public Worker(ILogger<Worker> logger, ILoggerFactory loggerFactory, IConfiguration configuration, StartArgs sArgs, AgentUtility agentUtility, Common cmn, DocumentIntelligence documentIntel, AiSearch aiSrch, LocalToolsUtility localToolsUtility, LocalToolsLibrary localToolsLibrary)
+      public Worker(ILogger<Worker> logger, ILoggerFactory loggerFactory, IConfiguration configuration, StartArgs sArgs, AgentUtility agentUtility, Common cmn, DocumentIntelligence documentIntel, AiSearch aiSrch)
       {
          log = logger;
          logFactory = loggerFactory;
@@ -42,10 +36,6 @@ namespace DocumentQuestions.Console
          Worker.agentUtility = agentUtility;
          documentIntelligence = documentIntel;
          aiSearch = aiSrch;
-         Worker.localToolsUtility = localToolsUtility;
-         Worker.localToolsLibrary = localToolsLibrary;
-         LocalToolsExtensions.ConfigureLogger(logger);
-
       }
 
       internal static async Task AskQuestion(string[] question)
@@ -167,7 +157,6 @@ namespace DocumentQuestions.Console
                if (!string.IsNullOrWhiteSpace(activeDocument))
                {
                   log.LogInformation(new() { { "Active Document: ", ConsoleColor.DarkGreen }, { activeDocument, ConsoleColor.Blue } });
-                  //log.LogInformation("use '--doc' flag to change the active document.", ConsoleColor.Yellow);
                }
                else
                {

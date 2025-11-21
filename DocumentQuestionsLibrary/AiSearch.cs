@@ -1,5 +1,7 @@
 ﻿using Azure;
 using Azure.AI.OpenAI;
+
+//using Azure.AI.OpenAI;
 using Azure.AI.Projects;
 using Azure.Identity;
 using Azure.Search.Documents;
@@ -55,7 +57,6 @@ namespace DocumentQuestions.Library
          AIProjectClient foundryClient  =  new AIProjectClient(new Uri(config[Constants.AIFOUNDRY_ENDPOINT] ?? throw new ArgumentException($"Missing {Constants.AIFOUNDRY_ENDPOINT} in configuration.")), new DefaultAzureCredential());
 
 
-         //Create 
          ClientConnection connection = foundryClient.GetConnection(typeof(AzureOpenAIClient).FullName!);
          if (!connection.TryGetLocatorAsUri(out Uri uri) || uri is null)
          {

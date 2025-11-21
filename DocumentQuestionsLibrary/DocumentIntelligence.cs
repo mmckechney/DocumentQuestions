@@ -2,13 +2,6 @@
 using Azure.AI.DocumentIntelligence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Text.RegularExpressions;
 
 namespace DocumentQuestions.Library
 {
@@ -56,7 +49,6 @@ namespace DocumentQuestions.Library
 
       public async Task ProcessDocument(Uri fileUri, string modelId = "prebuilt-layout")
       {
-         //log.LogInformation($"Processing file {file.FullName} with Document Intelligence Service...");
          Operation<AnalyzeResult> operation;
 
             log.LogInformation($"Analyzing document with model ID: {modelId} ");
@@ -71,7 +63,6 @@ namespace DocumentQuestions.Library
 
       public async Task ProcessDocument(FileInfo file, string modelId = "prebuilt-layout")
       {
-         //log.LogInformation($"Processing file {file.FullName} with Document Intelligence Service...");
          Operation<AnalyzeResult> operation;
 
          using (FileStream stream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read))
@@ -105,7 +96,6 @@ namespace DocumentQuestions.Library
             var taskList = new List<Task>();
 
             log.LogInformation($"Saving Document Intelligence results to Azure AI Search Index...");
-            //taskList.Add(aiSearch.StoreDataInIndex(indexName, Common.BaseFileName(filePathOrUrl), chunked));
             taskList.Add(aiSearch.StoreDataInIndex(AiSearch.IndexName, fileName, chunked));
             Task.WaitAll(taskList.ToArray());
          }

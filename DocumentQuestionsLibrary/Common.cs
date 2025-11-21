@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-
+using Azure.Storage.Blobs.Models;
 namespace DocumentQuestions.Library
 {
    public class Common
@@ -89,7 +89,7 @@ namespace DocumentQuestions.Library
          BlobServiceClient blobServiceClient = new BlobServiceClient(new Uri(storageURL), new DefaultAzureCredential());
          BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(containerName);
 
-         var blobs = containerClient.GetBlobs(prefix: blobName);
+         var blobs = containerClient.GetBlobs(new GetBlobsOptions() { Prefix = blobName });
          log.LogInformation($"Number of blobs {blobs.Count()}");
 
          var content = "";
@@ -125,7 +125,7 @@ namespace DocumentQuestions.Library
          BlobServiceClient blobServiceClient = new BlobServiceClient(new Uri(storageURL), new DefaultAzureCredential());
          BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(containerName);
 
-         var blobs = containerClient.GetBlobs(prefix: blobName);
+         var blobs = containerClient.GetBlobs(new GetBlobsOptions() { Prefix = blobName });
          log.LogInformation($"Number of blobs {blobs.Count()}");
 
          var content = "";

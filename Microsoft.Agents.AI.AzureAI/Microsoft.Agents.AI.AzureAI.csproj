@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net9.0</TargetFrameworks>
+    <!--<TargetFrameworks Condition="'$(Configuration)' == 'Debug'">$(ProjectsDebugTargetFrameworks)</TargetFrameworks>-->
+    <VersionSuffix>preview</VersionSuffix>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InjectSharedThrow>true</InjectSharedThrow>
+  </PropertyGroup>
+
+  <!--<Import Project="$(RepoRoot)/dotnet/nuget/nuget-package.props" />-->
+
+  <ItemGroup>
+    <PackageReference Include="Azure.AI.Projects" Version="1.2.0-beta.4" />
+    <PackageReference Include="Azure.AI.Projects.OpenAI" Version="1.0.0-beta.4" />
+    <PackageReference Include="Microsoft.Extensions.AI" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.0.0-preview.1.25560.10" />
+    <PackageReference Include="OpenAI" Version="2.6.0" />
+    <PackageReference Include="Microsoft.Agents.AI" Version="1.0.0-preview.251114.1" />
+  </ItemGroup>
+
+  <!--<ItemGroup>
+    <ProjectReference Include="..\Microsoft.Agents.AI\Microsoft.Agents.AI.csproj" />
+  </ItemGroup>-->
+
+  <PropertyGroup>
+    <!-- NuGet Package Settings -->
+    <Title>Microsoft Agent Framework for Foundry Agents</Title>
+    <Description>Provides Microsoft Agent Framework support for Foundry Agents.</Description>
+  </PropertyGroup>
+
+</Project>

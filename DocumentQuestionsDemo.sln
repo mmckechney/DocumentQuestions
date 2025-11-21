@@ -26,8 +26,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infra", "Infra", "{8F6FAAC3
 		infra\storage.bicep = infra\storage.bicep
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Agents.AI.AzureAI", "Microsoft.Agents.AI.AzureAI\Microsoft.Agents.AI.AzureAI.csproj", "{CCB97F73-CE7F-3C5D-67DE-1E718D148795}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,10 +40,6 @@ Global
 		{29F0F675-C21F-47C3-B99A-4BFDE8D69B20}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{29F0F675-C21F-47C3-B99A-4BFDE8D69B20}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{29F0F675-C21F-47C3-B99A-4BFDE8D69B20}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CCB97F73-CE7F-3C5D-67DE-1E718D148795}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CCB97F73-CE7F-3C5D-67DE-1E718D148795}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CCB97F73-CE7F-3C5D-67DE-1E718D148795}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CCB97F73-CE7F-3C5D-67DE-1E718D148795}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

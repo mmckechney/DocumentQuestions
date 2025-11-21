@@ -1,9 +1,9 @@
-# Semantic Kernel and Azure OpenAI: Ask Questions on your document
+# Agent Framework and Microsoft Foundry: Ask Questions on your document
 
 
 ## Overview
 
-This solution provides an example of how to process your own documents and then use [Azure AI Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/what-is-azure-ai-foundry) and [Microsoft Agent Framework]https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview) to ask question specific to that document.
+This solution provides an example of how to process your own documents and then use [Microsoft Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/what-is-azure-ai-foundry) and [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview) to ask question specific to that document.
 
 **NOTE**: The console app is also provided to demonstrate how to use the AI Foundry and the Agent Framework to ask questions of an AI Agent.
 
@@ -62,8 +62,6 @@ If successful, this process will create:
   - Role assigment for Cognitive Services identity for read access to `raw` container and write access to `extracted` container
 - Azure Cognitive Search account
 - Azure Document Intelligence Account
-
-  
 
 
 ### Running Samples via Console App

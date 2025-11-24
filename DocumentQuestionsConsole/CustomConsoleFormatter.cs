@@ -16,7 +16,7 @@ namespace DocumentQuestions.Console
       {
          (var color, var level) = LogLevelShort(logEntry.LogLevel);
 
-         var messages = logEntry.State.ToString().Split("|", StringSplitOptions.RemoveEmptyEntries);
+         var messages = logEntry.State?.ToString().Split("|", StringSplitOptions.RemoveEmptyEntries);
          string parsedMessage = "";
 
          if (logEntry.LogLevel != LogLevel.Information)
@@ -101,10 +101,10 @@ namespace DocumentQuestions.Console
 
       public static void LogTrace(this ILogger logger, string message, syS.ConsoleColor color)
       {
-         logger.LogTrace(FormatMessage(message,color));
+         logger.LogTrace(FormatMessage(message, color));
       }
 
-      public static void LogInformation(this ILogger logger, Dictionary<string,syS.ConsoleColor> messages)
+      public static void LogInformation(this ILogger logger, Dictionary<string, syS.ConsoleColor> messages)
       {
          logger.LogInformation(FormatMessages(messages));
       }

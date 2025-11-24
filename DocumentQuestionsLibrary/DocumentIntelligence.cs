@@ -9,7 +9,7 @@ namespace DocumentQuestions.Library
    public class DocumentIntelligence
    {
       public static List<string> ModelList =
-            [ "prebuild-layout", 
+            [ "prebuild-layout",
                "prebuilt-read",
                "prebuilt-mortgage.us.1003",
                "prebuilt-mortgage.us.1004",
@@ -40,9 +40,10 @@ namespace DocumentQuestions.Library
             var endpoint = config.GetValue<Uri>(Constants.DOCUMENTINTELLIGENCE_ENDPOINT) ?? throw new ArgumentException($"Missing {Constants.DOCUMENTINTELLIGENCE_ENDPOINT} in configuration");
             var key = config.GetValue<string>(Constants.DOCUMENTINTELLIGENCE_KEY) ?? throw new ArgumentException($"Missing {Constants.DOCUMENTINTELLIGENCE_KEY} in configuration");
             this.docIntelClient = new DocumentIntelligenceClient(endpoint, new AzureKeyCredential(key));
-         }catch(Exception exe)
+         }
+         catch (Exception exe)
          {
-            log.LogError(exe.ToString() );
+            log.LogError(exe.ToString());
          }
       }
 
@@ -51,12 +52,12 @@ namespace DocumentQuestions.Library
       {
          Operation<AnalyzeResult> operation;
 
-            log.LogInformation($"Analyzing document with model ID: {modelId} ");
-            AnalyzeDocumentOptions opts = new AnalyzeDocumentOptions(modelId: modelId, uriSource: fileUri)
-            {
-               OutputContentFormat = DocumentContentFormat.Markdown
-            };
-            operation = await docIntelClient.AnalyzeDocumentAsync(Azure.WaitUntil.Completed, opts);
+         log.LogInformation($"Analyzing document with model ID: {modelId} ");
+         AnalyzeDocumentOptions opts = new AnalyzeDocumentOptions(modelId: modelId, uriSource: fileUri)
+         {
+            OutputContentFormat = DocumentContentFormat.Markdown
+         };
+         operation = await docIntelClient.AnalyzeDocumentAsync(Azure.WaitUntil.Completed, opts);
          AnalyzeResult result = operation.Value;
          await ProcessDocumentResults(result, fileUri.AbsoluteUri);
       }
@@ -87,7 +88,7 @@ namespace DocumentQuestions.Library
             var fileName = Common.GetFileNameForBlob(filePathOrUrl);
             string content = result.Content;
             var contentLines = content.Split("\n").ToList();
-           
+
 
             log.LogInformation($"Writing document Markdown to blob...");
             await common.WriteAnalysisContentToBlob(fileName, result.Content, log);

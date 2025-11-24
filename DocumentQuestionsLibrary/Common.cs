@@ -1,12 +1,12 @@
 ﻿using Azure.Core;
 using Azure.Identity;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using DocumentQuestions.Library.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Azure.Storage.Blobs.Models;
 namespace DocumentQuestions.Library
 {
    public class Common
@@ -24,7 +24,7 @@ namespace DocumentQuestions.Library
       {
          get
          {
-            if(_tokenCred == null)
+            if (_tokenCred == null)
             {
                _tokenCred = new ChainedTokenCredential(new ManagedIdentityCredential(), new AzureCliCredential());
             }
@@ -35,18 +35,18 @@ namespace DocumentQuestions.Library
 
       public static string GetFileNameForBlob(string filePathOrUrl)
       {
-            string fileName;
-            Uri uri;
-            if (Uri.TryCreate(filePathOrUrl, UriKind.RelativeOrAbsolute, out uri) && uri.IsAbsoluteUri && uri.Scheme != Uri.UriSchemeFile)
-            {
-               // It's a URL
-               fileName =  Path.GetFileNameWithoutExtension(uri.AbsolutePath);
-            }
-            else
-            {
-               // It's a local file path
-               fileName = Path.GetFileNameWithoutExtension(filePathOrUrl);
-            }
+         string fileName;
+         Uri uri;
+         if (Uri.TryCreate(filePathOrUrl, UriKind.RelativeOrAbsolute, out uri) && uri.IsAbsoluteUri && uri.Scheme != Uri.UriSchemeFile)
+         {
+            // It's a URL
+            fileName = Path.GetFileNameWithoutExtension(uri.AbsolutePath);
+         }
+         else
+         {
+            // It's a local file path
+            fileName = Path.GetFileNameWithoutExtension(filePathOrUrl);
+         }
          return fileName;
       }
 
@@ -105,7 +105,7 @@ namespace DocumentQuestions.Library
                using (StreamReader reader = new StreamReader(stream))
                {
                   var processedFile = JsonSerializer.Deserialize<ProcessedFile>(await reader.ReadToEndAsync());
-                  content += processedFile.Content;
+                  content += processedFile?.Content;
 
 
                }
@@ -167,7 +167,7 @@ namespace DocumentQuestions.Library
          string blobName = Path.GetFileNameWithoutExtension(name) + "/" + newName;
          try
          {
-        
+
             string storageURL = config[Constants.STORAGE_ACCOUNT_BLOB_URL] ?? throw new ArgumentException($"Missing {Constants.STORAGE_ACCOUNT_BLOB_URL} in configuration.");
             string containerName = config[Constants.EXTRACTED_CONTAINER_NAME] ?? throw new ArgumentException($"Missing {Constants.EXTRACTED_CONTAINER_NAME} in configuration.");
 

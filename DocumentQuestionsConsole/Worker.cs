@@ -48,13 +48,13 @@ namespace DocumentQuestions.Console
          string quest = string.Join(" ", question);
          syS.Console.WriteLine("----------------------");
 
-            StringBuilder responseBuilder = new();
-            await foreach (var (text,thread) in agentUtility.AskQuestionStreamingWithThread (quest, activeDocument, currentThread))
-            {
-               syS.Console.Write(text);
-               responseBuilder.Append(text);
-               currentThread = thread; // Update thread for next question
-            }
+         StringBuilder responseBuilder = new();
+         await foreach (var (text, thread) in agentUtility.AskQuestionStreamingWithThread(quest, activeDocument, currentThread))
+         {
+            syS.Console.Write(text);
+            responseBuilder.Append(text);
+            currentThread = thread; // Update thread for next question
+         }
 
          syS.Console.WriteLine("----------------------");
          syS.Console.WriteLine();
@@ -119,7 +119,7 @@ namespace DocumentQuestions.Console
             log.LogInformation($"The file {name} doesn't exist. Please enter a valid file name", ConsoleColor.Red);
             return;
          }
-       
+
          await documentIntelligence.ProcessDocument(new FileInfo(name), model);
 
       }

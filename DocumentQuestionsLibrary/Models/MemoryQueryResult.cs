@@ -1,5 +1,3 @@
-using System;
-
 namespace DocumentQuestions.Library.Models
 {
    public class MemoryQueryResult

@@ -13,9 +13,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenAI.Embeddings;
 using System.ClientModel.Primitives;
-using System.Collections;
 using System.ComponentModel;
-using aim = Azure.Search.Documents.Indexes.Models;
+using aIm = Azure.Search.Documents.Indexes.Models;
 
 namespace DocumentQuestions.Library
 {
@@ -54,11 +53,11 @@ namespace DocumentQuestions.Library
          var embeddingDeploymentName = config[Constants.OPENAI_EMBEDDING_DEPLOYMENT_NAME] ?? throw new ArgumentException($"Missing {Constants.OPENAI_EMBEDDING_DEPLOYMENT_NAME} in configuration.");
 
 
-         AIProjectClient foundryClient  =  new AIProjectClient(new Uri(config[Constants.AIFOUNDRY_ENDPOINT] ?? throw new ArgumentException($"Missing {Constants.AIFOUNDRY_ENDPOINT} in configuration.")), new DefaultAzureCredential());
+         AIProjectClient foundryClient = new AIProjectClient(new Uri(config[Constants.AIFOUNDRY_ENDPOINT] ?? throw new ArgumentException($"Missing {Constants.AIFOUNDRY_ENDPOINT} in configuration.")), new DefaultAzureCredential());
 
 
          ClientConnection connection = foundryClient.GetConnection(typeof(AzureOpenAIClient).FullName!);
-         if (!connection.TryGetLocatorAsUri(out Uri uri) || uri is null)
+         if (!connection.TryGetLocatorAsUri(out Uri? uri) || uri is null)
          {
             throw new InvalidOperationException("Invalid URI.");
          }
@@ -78,7 +77,7 @@ namespace DocumentQuestions.Library
          log.LogInformation($"Storing memory to AI Search index '{AiSearch.IndexName}'...");
 
          var client = new SearchClient(searchEndpointUri, AiSearch.IndexName, this.searchCredential);
-     
+
          var documents = new List<SearchDocument>();
          var index = 0;
 
@@ -136,7 +135,7 @@ namespace DocumentQuestions.Library
             var options = new SearchOptions
             {
                Size = MaxItemReturnCount,
-               QueryType = SearchQueryType.Semantic, 
+               QueryType = SearchQueryType.Semantic,
                VectorSearch = new VectorSearchOptions(),
                SemanticSearch = new SemanticSearchOptions
                {
@@ -146,7 +145,7 @@ namespace DocumentQuestions.Library
                },
                Debug = new QueryDebugMode()
             };
-            
+
             // Add filter to restrict results to specific fileName
             if (!string.IsNullOrWhiteSpace(fileName))
             {
@@ -154,7 +153,7 @@ namespace DocumentQuestions.Library
                options.Filter = $"{FileNameFieldName} eq '{fileName.Replace("'", "''")}'"; // Escape single quotes
                log.LogDebug("Applied filter: {Filter}", options.Filter);
             }
-            
+
             options.VectorSearch.Queries.Add(vectorQuery);
             options.Select.Add(IdFieldName);
             options.Select.Add(ContentFieldName);
@@ -181,7 +180,7 @@ namespace DocumentQuestions.Library
 
          return searchResult;
       }
-      
+
       public async Task<List<string>> ListAvailableIndexes(bool unquoted = false)
       {
          try
@@ -206,7 +205,7 @@ namespace DocumentQuestions.Library
             return new List<string>();
          }
       }
-     
+
       public async Task<string> AddIndex(string name)
       {
          try
@@ -241,7 +240,7 @@ namespace DocumentQuestions.Library
             };
 
 
-            var vectorAlgo = new aim.HnswAlgorithmConfiguration("hnsw-algo")
+            var vectorAlgo = new aIm.HnswAlgorithmConfiguration("hnsw-algo")
             {
 
                Parameters = new HnswParameters
@@ -279,14 +278,14 @@ namespace DocumentQuestions.Library
             semanticSettings.Configurations.Add(semanticConfig);
 
 
-            var index = new aim.SearchIndex(name)
+            var index = new aIm.SearchIndex(name)
             {
                Fields =
                {
-                  new aim.SimpleField("id", aim.SearchFieldDataType.String) { IsKey = true, IsFilterable = true },
-                  new aim.SimpleField("fileName", aim.SearchFieldDataType.String) { IsFilterable = true, IsFacetable = true },
-                  new aim.SearchField("content", aim.SearchFieldDataType.String) { IsSearchable = true, AnalyzerName = aim.LexicalAnalyzerName.EnMicrosoft },
-                  new aim.SearchField("contentVector", aim.SearchFieldDataType.Collection(aim.SearchFieldDataType.Single))
+                  new aIm.SimpleField("id", aIm.SearchFieldDataType.String) { IsKey = true, IsFilterable = true },
+                  new aIm.SimpleField("fileName", aIm.SearchFieldDataType.String) { IsFilterable = true, IsFacetable = true },
+                  new aIm.SearchField("content", aIm.SearchFieldDataType.String) { IsSearchable = true, AnalyzerName = aIm.LexicalAnalyzerName.EnMicrosoft },
+                  new aIm.SearchField("contentVector", aIm.SearchFieldDataType.Collection(aIm.SearchFieldDataType.Single))
                   {
                      VectorSearchDimensions = embeddingDimensions,
                      VectorSearchProfileName = vectorProfileName,
@@ -345,7 +344,7 @@ namespace DocumentQuestions.Library
          return deleted;
       }
 
-      public async Task<IReadOnlyList<string>> GetDistinctFileNamesAsync(string? filter = null, int maxDistinct = 1000)
+      public async Task<IList<string>> GetDistinctFileNamesAsync(string? filter = null, int maxDistinct = 1000)
       {
          await AddIndex(AiSearch.IndexName);
          // We only need facets, not actual documents

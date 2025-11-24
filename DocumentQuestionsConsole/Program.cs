@@ -1,18 +1,16 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Azure;
+using Azure.AI.DocumentIntelligence;
+using Azure.Monitor.OpenTelemetry.Exporter;
+using DocumentQuestions.Library;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
-using DocumentQuestions.Library;
-using Azure.AI.DocumentIntelligence;
-using Azure;
-using Azure.Identity;
-using Azure.Monitor.OpenTelemetry.Exporter;
-using OpenTelemetry.Resources;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using Microsoft.Extensions.Options;
 
 namespace DocumentQuestions.Console
 {
@@ -112,8 +110,8 @@ namespace DocumentQuestions.Console
                services.AddHostedService<Worker>();
                services.AddSingleton<ConsoleFormatter, CustomConsoleFormatter>();
             })
-            
-             
+
+
              .ConfigureAppConfiguration((hostContext, appConfiguration) =>
              {
                 appConfiguration.SetBasePath(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location));

@@ -5,10 +5,6 @@ using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using OpenAI.Responses;
-using System.ComponentModel;
-using System.Text;
-using Microsoft.Agents.AI.AzureAI;
 
 namespace DocumentQuestions.Library
 {
@@ -34,7 +30,6 @@ namespace DocumentQuestions.Library
 - When answering questions, always provide citations in the format [DocumentName: Page X] where X is the page number from which the information was obtained.
 
 - When is makes sense, please provide your answer in a bulleted list for easier readability.";
-      AgentThread askQuestionsAgentThread;
       AiSearch aiSearchAdmin;
       AIProjectClient foundryProject;
 
@@ -47,15 +42,16 @@ namespace DocumentQuestions.Library
          this.common = common;
          this.aiSearchAdmin = aiSearchAdmin;
 
-         this.foundryProject = new AIProjectClient(new Uri(config["AIFOUNDRY_ENDPOINT"]), new DefaultAzureCredential());
-         
+         var foundryEndPoint = config["AIFOUNDRY_ENDPOINT"] ?? throw new ArgumentException("Missing AIFOUNDRY_ENDPOINT in configuration.");
+         this.foundryProject = new AIProjectClient(new Uri(foundryEndPoint), new DefaultAzureCredential());
+
          InitAgents().GetAwaiter().GetResult();
       }
 
       public async Task InitAgents()
       {
          var openAiChatDeploymentName = config[Constants.OPENAI_CHAT_DEPLOYMENT_NAME] ?? throw new ArgumentException($"Missing {Constants.OPENAI_CHAT_DEPLOYMENT_NAME} in configuration.");
-         
+
          AITool aiTool = AIFunctionFactory.Create(aiSearchAdmin.SearchIndexAsync);
          askQuestionsAgent = await GetFoundryAgent("AskQuestions", [aiTool]);
 
@@ -63,11 +59,16 @@ namespace DocumentQuestions.Library
          {
             askQuestionsAgent = await CreateFoundryAgent("AskQuestions", openAiChatDeploymentName, "Asks questions about the document", AskQuestionsInstructions, [aiTool]);
          }
+
+         if(askQuestionsAgent == null)
+         {
+            throw new NullReferenceException("The agent failed to initialize!");
+         }
       }
 
-      private async Task<AIAgent> GetFoundryAgent(string agentName, params AITool[] tools)
+      private async Task<AIAgent?> GetFoundryAgent(string agentName, params AITool[] tools)
       {
-    
+
          var allAgents = new List<AgentRecord>();
          await foreach (var a in foundryProject.Agents.GetAgentsAsync())
          {
@@ -83,12 +84,12 @@ namespace DocumentQuestions.Library
          {
             return null;
          }
-        
+
          //Need to add local tools each time you "get" the an existing agent
          return foundryProject.GetAIAgent(agentName, tools);
       }
 
-      private async Task<AIAgent> CreateFoundryAgent(string name, string deployment, string description, string instructions, params AITool[]  tools)
+      private async Task<AIAgent?> CreateFoundryAgent(string name, string deployment, string description, string instructions, params AITool[] tools)
       {
          try
          {

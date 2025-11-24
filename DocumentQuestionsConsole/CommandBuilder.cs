@@ -1,14 +1,10 @@
 ﻿using DocumentQuestions.Library;
-using Microsoft.Extensions.Hosting;
 using Spectre.Console;
-using System;
 using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Help;
 using System.CommandLine.NamingConventionBinder;
 using System.CommandLine.Parsing;
-using System.Diagnostics;
-using System.Linq;
 
 namespace DocumentQuestions.Console
 {
@@ -16,8 +12,8 @@ namespace DocumentQuestions.Console
    {
       public static Parser BuildCommandLine()
       {
-         
-         var docOpt = new Option<string>(new string[] { "--doc", "-d" },() => "", "Name of the document to inquire about.") { IsRequired = true };
+
+         var docOpt = new Option<string>(new string[] { "--doc", "-d" }, () => "", "Name of the document to inquire about.") { IsRequired = true };
          var docCommand = new Command("doc", "Set the active document to start asking questions");
          var documentArg = new Argument<string[]>("document", "Document to set as active") { Arity = ArgumentArity.ZeroOrMore };
          docCommand.Add(documentArg);
@@ -28,7 +24,7 @@ namespace DocumentQuestions.Console
          askQuestionCommand.Add(questionArg);
          askQuestionCommand.Handler = CommandHandler.Create<string[]>(Worker.AskQuestion);
 
-         var fileOpt = new Option<string>(new string[]{ "--file", "-f" }, "Path to the file to process and index (surround with quotes if there are spaces in the name)") { IsRequired = true };
+         var fileOpt = new Option<string>(new string[] { "--file", "-f" }, "Path to the file to process and index (surround with quotes if there are spaces in the name)") { IsRequired = true };
          var modelOpt = new Option<string>(new string[] { "--model", "-m" }, () => "prebuilt-layout", $"Model to use for processing the document: {string.Join(", ", DocumentIntelligence.ModelList)}");
          var indexNameOpt = new Option<string>(new string[] { "--index", "-i" }, $"Custom index name, otherwise it will default to the file name");
          var processFileCommand = new Command("process", "Process the file contents against Document Intelligence and add to Azure AI Search index")
@@ -53,7 +49,7 @@ namespace DocumentQuestions.Console
          rootCommand.Add(askQuestionCommand);
          rootCommand.Add(processFileCommand);
          rootCommand.Add(listCommand);
-         rootCommand.Add(clearIndexCommand);        
+         rootCommand.Add(clearIndexCommand);
 
          var parser = new CommandLineBuilder(rootCommand)
               .UseDefaults()

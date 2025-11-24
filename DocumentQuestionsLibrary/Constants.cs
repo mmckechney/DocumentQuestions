@@ -7,7 +7,7 @@ namespace DocumentQuestions.Library
 
       public const string OPENAI_EMBEDDING_DEPLOYMENT_NAME = "OPENAI_EMBEDDING_DEPLOYMENT_NAME";
       public const string OPENAI_EMBEDDING_MODEL_NAME = "OPENAI_EMBEDDING_MODEL_NAME";
-      public const string AIFOUNDRY_ENDPOINT = "AIFOUNDRY_ENDPOINT";
+      public const string AIFOUNDRY_PROJECT_ENDPOINT = "AIFOUNDRY_PROJECT_ENDPOINT";
 
 
       public const string AISEARCH_ENDPOINT = "AISEARCH_ENDPOINT";
@@ -23,6 +23,6 @@ namespace DocumentQuestions.Library
       public const string EXTRACTED_CONTAINER_NAME = "EXTRACTED_CONTAINER_NAME";
       public const string RAW_CONTAINER_NAME = "RAW_CONTAINER_NAME";
 
-      public const string APPLICATIONINSIGHTS_CONNECTION_STRING = "APPLICATIONINSIGHTS_CONNECTION_STRING";
+      public const string TRACE_SOURCE_NAME = "DocumentQuestions";
    }
 }

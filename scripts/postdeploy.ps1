@@ -33,7 +33,8 @@ $localSettings = @{
         "$($json.STORAGE_ACCOUNT_NAME)" = $envValues.storageAccountName
         "$($json.EXTRACTED_CONTAINER_NAME)" = $envValues.extractedContainerName
         "$($json.RAW_CONTAINER_NAME)" = $envValues.rawContainerName
-        "$($json.AIFOUNDRY_ENDPOINT)" = $envValues.aiFoundryEndpoint
+        "$($json.AIFOUNDRY_PROJECT_ENDPOINT)" = $envValues.aiFoundryProjectEndpoint
+        #"$($json.APPLICATIONINSIGHTS_CONNECTION_STRING)" = $envValues.appInsightsConnectionString
         
         "UseOpenAIKey" = $true
 }

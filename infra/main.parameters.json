@@ -25,6 +25,9 @@
     },
     "aiFoundryName": {
       "value": "${AZURE_AIFOUNDRY_NAME}"
+    },
+    "appInsightsName": {
+      "value": "${AZURE_APPINSIGHTS_NAME}"
     }
   }
 }

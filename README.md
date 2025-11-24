@@ -62,6 +62,7 @@ If successful, this process will create:
   - Role assigment for Cognitive Services identity for read access to `raw` container and write access to `extracted` container
 - Azure Cognitive Search account
 - Azure Document Intelligence Account
+- Azure Application Insights resource automatically connected to the Microsoft Foundry project for telemetry and monitoring
 
 
 ### Running Samples via Console App

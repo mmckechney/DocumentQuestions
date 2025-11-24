@@ -10,6 +10,7 @@ param docIntelligenceAccountName string
 param aiSearchName string
 param currentUserObjectId string
 param aiFoundryName string
+param appInsightsName string
 
 
 var safeStorageAccountName = toLower(replace(storageAccountName, '-', ''))
@@ -30,12 +31,27 @@ module keyVault 'keyvault.bicep' = {
     ]
 }
 
+module appInsights 'appinsights.bicep' = {
+    name: 'appInsights'
+    scope: resourceGroup(resourceGroupName)
+    params: {
+        appInsightsName: appInsightsName
+        location: location
+    }
+    dependsOn: [
+        rg
+    ]
+}
+
 module aiFoundry 'aifoundryresource.bicep' = {
     name: 'aiFoundry'
     scope: resourceGroup(resourceGroupName)
     params: {
         aiFoundryName: aiFoundryName
         location: location
+        appInsightsConnectionString: appInsights.outputs.connectionString
+        appInsightsResourceId: appInsights.outputs.appInsightsId
+        appInsightsResourceName: appInsightsName
     }
     dependsOn: [
         rg
@@ -114,8 +130,9 @@ output aiSearchEndpoint string = aiSearch.outputs.aiSearchEndpoint
 output embeddingModelName string = aiFoundry.outputs.embeddingModelName
 output chatModelName string = aiFoundry.outputs.chatModelName
 output storageAccountName string = safeStorageAccountName
-output aiFoundryEndpoint string = aiFoundry.outputs.aiFoundryEndpoint
+output aiFoundryProjectEndpoint string = aiFoundry.outputs.aiFoundryProjectEndpoint
 output storageBlobEndpoint string = storageResources.outputs.blobEndpoint
 output storageQueueEndpoint string = storageResources.outputs.queueEndpoint
+output appInsightsConnectionString string = appInsights.outputs.connectionString
 
 

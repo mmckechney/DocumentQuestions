@@ -1,10 +1,11 @@
 ﻿using Azure.AI.Projects;
 using Azure.AI.Projects.OpenAI;
-using Azure.Identity;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Trace;
+
 
 namespace DocumentQuestions.Library
 {
@@ -17,9 +18,6 @@ namespace DocumentQuestions.Library
       IConfiguration config;
       ILoggerFactory logFactory;
       Common common;
-
-
-      // Prompt templates as constants (converted from YAML)
       private const string AskQuestionsInstructions = @"You are a document answering bot.
 -  You will need to use a tool to retrieve the content - only make one query per user ask, to not iterate on your search tool calling. 
 - You are then to answer the question based on the content provided. 
@@ -31,36 +29,44 @@ namespace DocumentQuestions.Library
 
 - When is makes sense, please provide your answer in a bulleted list for easier readability.";
       AiSearch aiSearchAdmin;
-      AIProjectClient foundryProject;
+      AIProjectClient foundryProjectClient;
+      TracerProvider tracerProvider;
 
 
-      public AgentUtility(ILoggerFactory logFactory, IConfiguration config, Common common, AiSearch aiSearchAdmin)
+      public AgentUtility(ILoggerFactory logFactory, IConfiguration config, Common common, AiSearch aiSearchAdmin, AIProjectClient projClient, TracerProvider tracerProvider)
       {
          log = logFactory.CreateLogger<AgentUtility>();
          this.config = config;
          this.logFactory = logFactory;
          this.common = common;
          this.aiSearchAdmin = aiSearchAdmin;
-
-         var foundryEndPoint = config["AIFOUNDRY_ENDPOINT"] ?? throw new ArgumentException("Missing AIFOUNDRY_ENDPOINT in configuration.");
-         this.foundryProject = new AIProjectClient(new Uri(foundryEndPoint), new DefaultAzureCredential());
+         this.foundryProjectClient = projClient;
+         this.tracerProvider = tracerProvider;
 
          InitAgents().GetAwaiter().GetResult();
+         EnableAgentTelemteryAndMonitoring();
+      }
+
+      private void EnableAgentTelemteryAndMonitoring()
+      {
+
+         var appInsightsConnectionString = foundryProjectClient.Telemetry.GetApplicationInsightsConnectionString();
       }
 
       public async Task InitAgents()
       {
+         var agentName = "AskQuestions";
          var openAiChatDeploymentName = config[Constants.OPENAI_CHAT_DEPLOYMENT_NAME] ?? throw new ArgumentException($"Missing {Constants.OPENAI_CHAT_DEPLOYMENT_NAME} in configuration.");
 
          AITool aiTool = AIFunctionFactory.Create(aiSearchAdmin.SearchIndexAsync);
-         askQuestionsAgent = await GetFoundryAgent("AskQuestions", [aiTool]);
+         askQuestionsAgent = await GetFoundryAgent(agentName, [aiTool]);
 
          if (askQuestionsAgent == null)
          {
-            askQuestionsAgent = await CreateFoundryAgent("AskQuestions", openAiChatDeploymentName, "Asks questions about the document", AskQuestionsInstructions, [aiTool]);
+            askQuestionsAgent = await CreateFoundryAgent(agentName, openAiChatDeploymentName, "Asks questions about the document", AskQuestionsInstructions, [aiTool]);
          }
 
-         if(askQuestionsAgent == null)
+         if (askQuestionsAgent == null)
          {
             throw new NullReferenceException("The agent failed to initialize!");
          }
@@ -70,7 +76,7 @@ namespace DocumentQuestions.Library
       {
 
          var allAgents = new List<AgentRecord>();
-         await foreach (var a in foundryProject.Agents.GetAgentsAsync())
+         await foreach (var a in foundryProjectClient.Agents.GetAgentsAsync())
          {
             allAgents.Add(a);
          }
@@ -86,14 +92,31 @@ namespace DocumentQuestions.Library
          }
 
          //Need to add local tools each time you "get" the an existing agent
-         return foundryProject.GetAIAgent(agentName, tools);
+         return foundryProjectClient.GetAIAgent(agentName, tools)
+               .AsBuilder()
+               .UseOpenTelemetry(sourceName: Constants.TRACE_SOURCE_NAME, configure: cfg =>
+               {
+                  cfg.EnableSensitiveData = true;
+               })
+               .Build();
       }
 
       private async Task<AIAgent?> CreateFoundryAgent(string name, string deployment, string description, string instructions, params AITool[] tools)
       {
          try
          {
-            var agent = await foundryProject.CreateAIAgentAsync(name: name, description: description, instructions: instructions, tools: tools, model: deployment);
+            AIAgent? agent = null;
+            await Task.Run(async () =>
+               {
+                  agent = foundryProjectClient.CreateAIAgent(name: name, description: description, instructions: instructions, tools: tools, model: deployment)
+                     .AsBuilder()
+                       .UseOpenTelemetry(sourceName: Constants.TRACE_SOURCE_NAME, configure: cfg =>
+                       {
+                          cfg.EnableSensitiveData = true;
+                       })
+                     .Build();
+
+               });
             return agent;
          }
          catch (Exception exe)
@@ -105,6 +128,7 @@ namespace DocumentQuestions.Library
 
       public async IAsyncEnumerable<(string text, AgentThread thread)> AskQuestionStreamingWithThread(string question, string fileName, AgentThread thread = null)
       {
+
          log.LogDebug("Asking question about document with thread context...");
 
          string userMessage;
@@ -121,6 +145,7 @@ namespace DocumentQuestions.Library
                yield return (update.ToString(), thread);
             }
          }
+
       }
    }
 

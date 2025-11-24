@@ -53,7 +53,7 @@ namespace DocumentQuestions.Library
          var embeddingDeploymentName = config[Constants.OPENAI_EMBEDDING_DEPLOYMENT_NAME] ?? throw new ArgumentException($"Missing {Constants.OPENAI_EMBEDDING_DEPLOYMENT_NAME} in configuration.");
 
 
-         AIProjectClient foundryClient = new AIProjectClient(new Uri(config[Constants.AIFOUNDRY_ENDPOINT] ?? throw new ArgumentException($"Missing {Constants.AIFOUNDRY_ENDPOINT} in configuration.")), new DefaultAzureCredential());
+         AIProjectClient foundryClient = new AIProjectClient(new Uri(config[Constants.AIFOUNDRY_PROJECT_ENDPOINT] ?? throw new ArgumentException($"Missing {Constants.AIFOUNDRY_PROJECT_ENDPOINT} in configuration.")), new DefaultAzureCredential());
 
 
          ClientConnection connection = foundryClient.GetConnection(typeof(AzureOpenAIClient).FullName!);
@@ -219,7 +219,7 @@ namespace DocumentQuestions.Library
                var existing = await indexClient.GetIndexAsync(name);
                if (existing != null)
                {
-                  log.LogInformation("Index {IndexName} already exists.", name);
+                  log.LogDebug("Index {IndexName} already exists.", name);
                   return name;
                }
             }

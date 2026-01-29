@@ -10,12 +10,12 @@
     <UserSecretsId>6d84e022-7953-4008-80bf-692a3d0c9811</UserSecretsId>
   </PropertyGroup>
    <ItemGroup>
-      <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.6.0-beta.1" />
-      <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
-      <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
-      <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
-      <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.0" />
+      <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.6.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.2" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
+      <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.2" />
+      <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.2" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.2" />
       <PackageReference Include="Spectre.Console" Version="0.54.1-alpha.0.10" />
 	   <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
 	   <PackageReference Include="System.CommandLine.NamingConventionBinder" Version="2.0.0-beta4.22272.1" />

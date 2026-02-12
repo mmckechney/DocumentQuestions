@@ -1,6 +1,7 @@
 ﻿using Azure.AI.Projects;
 using Azure.AI.Projects.OpenAI;
 using Microsoft.Agents.AI;
+using Microsoft.Agents.AI.AzureAI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -92,7 +93,7 @@ namespace DocumentQuestions.Library
          }
 
          //Need to add local tools each time you "get" the an existing agent
-         return foundryProjectClient.GetAIAgent(agentName, tools)
+         return (AIAgent)(await foundryProjectClient.GetAIAgentAsync(agentName, tools.ToList(), clientFactory: null, services: null))
                .AsBuilder()
                .UseOpenTelemetry(sourceName: Constants.TRACE_SOURCE_NAME, configure: cfg =>
                {
@@ -105,19 +106,14 @@ namespace DocumentQuestions.Library
       {
          try
          {
-            AIAgent? agent = null;
-            await Task.Run(async () =>
+            var agent = await foundryProjectClient.CreateAIAgentAsync(name: name, model: deployment, instructions: instructions, description: description, tools: tools.ToList(), clientFactory: null, services: null);
+            return (ChatClientAgent)agent
+               .AsBuilder()
+               .UseOpenTelemetry(sourceName: Constants.TRACE_SOURCE_NAME, configure: cfg =>
                {
-                  agent = foundryProjectClient.CreateAIAgent(name: name, description: description, instructions: instructions, tools: tools, model: deployment)
-                     .AsBuilder()
-                       .UseOpenTelemetry(sourceName: Constants.TRACE_SOURCE_NAME, configure: cfg =>
-                       {
-                          cfg.EnableSensitiveData = true;
-                       })
-                     .Build();
-
-               });
-            return agent;
+                  cfg.EnableSensitiveData = true;
+               })
+               .Build();
          }
          catch (Exception exe)
          {
@@ -126,23 +122,23 @@ namespace DocumentQuestions.Library
          }
       }
 
-      public async IAsyncEnumerable<(string text, AgentThread thread)> AskQuestionStreamingWithThread(string question, string fileName, AgentThread thread = null)
+      public async IAsyncEnumerable<(string text, AgentSession session)> AskQuestionStreamingWithThread(string question, string fileName, AgentSession? session = null)
       {
 
          log.LogDebug("Asking question about document with thread context...");
 
          string userMessage;
          userMessage = $"Document Name:\n{fileName}\n\nQuestion: {question}";
-         if (thread == null)
+         if (session == null)
          {
-            thread = askQuestionsAgent.GetNewThread();
+            session = await askQuestionsAgent.CreateSessionAsync();
          }
 
-         await foreach (AgentRunResponseUpdate update in askQuestionsAgent.RunStreamingAsync(new ChatMessage() { Contents = [new TextContent(userMessage)], Role = ChatRole.User }, thread))
+         await foreach (AgentResponseUpdate update in askQuestionsAgent.RunStreamingAsync(new ChatMessage() { Contents = [new TextContent(userMessage)], Role = ChatRole.User }, session))
          {
             if (update.Text != null)
             {
-               yield return (update.ToString(), thread);
+               yield return (update.ToString(), session);
             }
          }
 

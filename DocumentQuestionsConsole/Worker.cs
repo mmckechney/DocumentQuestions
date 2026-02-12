@@ -1,4 +1,5 @@
-﻿using DocumentQuestions.Library;
+﻿//using Azure.AI.Projects.OpenAI;
+using DocumentQuestions.Library;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -22,7 +23,7 @@ namespace DocumentQuestions.Console
       private static DocumentIntelligence documentIntelligence;
       private static string activeDocument = string.Empty;
       private static AiSearch aiSearch;
-      private static AgentThread? currentThread = null; // Thread for multi-turn conversations
+      private static AgentSession? currentSession = null; // Session for multi-turn conversations
 
 
 
@@ -49,11 +50,11 @@ namespace DocumentQuestions.Console
          syS.Console.WriteLine("----------------------");
 
          StringBuilder responseBuilder = new();
-         await foreach (var (text, thread) in agentUtility.AskQuestionStreamingWithThread(quest, activeDocument, currentThread))
+         await foreach (var (text, session) in agentUtility.AskQuestionStreamingWithThread(quest, activeDocument, currentSession))
          {
             syS.Console.Write(text);
             responseBuilder.Append(text);
-            currentThread = thread; // Update thread for next question
+            currentSession = session; // Update session for next question
          }
 
          syS.Console.WriteLine("----------------------");
@@ -62,8 +63,8 @@ namespace DocumentQuestions.Console
 
       internal static Task ResetConversation()
       {
-         currentThread = null;
-         log.LogInformation("Conversation thread reset. Starting fresh conversation.", ConsoleColor.Green);
+         currentSession = null;
+         log.LogInformation("Conversation session reset. Starting fresh conversation.", ConsoleColor.Green);
          return Task.CompletedTask;
       }
 
@@ -128,7 +129,7 @@ namespace DocumentQuestions.Console
       {
          var docName = string.Join(" ", document);
          activeDocument = docName;
-         Worker.currentThread = null;
+         Worker.currentSession = null;
       }
 
       protected async override Task ExecuteAsync(CancellationToken stoppingToken)

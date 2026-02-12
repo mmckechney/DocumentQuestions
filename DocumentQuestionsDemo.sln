@@ -19,7 +19,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infra", "Infra", "{8F6FAAC3
 		infra\aisearch.bicep = infra\aisearch.bicep
 		infra\constants.json = infra\constants.json
 		infra\docintelligence.bicep = infra\docintelligence.bicep
-		infra\keyvault.bicep = infra\keyvault.bicep
 		infra\kvKeys.json = infra\kvKeys.json
 		infra\main.bicep = infra\main.bicep
 		infra\roleassignments.bicep = infra\roleassignments.bicep

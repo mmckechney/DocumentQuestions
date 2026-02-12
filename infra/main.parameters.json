@@ -8,9 +8,6 @@
     "resourceGroupName": {
       "value": "${AZURE_RESOURCEGROUP_NAME}"
     },
-    "keyVaultName": {
-      "value": "${AZURE_KEYVAULT_NAME}"
-    },
     "storageAccountName": {
       "value": "${AZURE_STORAGEACCT_NAME}"
     },

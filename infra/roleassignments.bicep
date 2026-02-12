@@ -19,10 +19,6 @@ var storageQueueDataContrib = {
   roleName: 'storageQueueDataContrib'
   roleId: '974c5e8b-45b9-4653-ba55-5f855dd0fb88'
 }
-var keyVaultSecretsUser = {
-  roleName: 'keyVaultSecretsUser'
-  roleId: '4633458b-17de-408a-b874-0445c86b69e6'
-}
 var cogServicesContrib = {
   roleName: 'cogServicesContrib'
   roleId: '25fbc0a9-bd7c-42a3-aa1a-3b75d497ee68'
@@ -53,7 +49,6 @@ var roleAssignments = [
   storageBlobDataReader
   storageBlobDataOwner
   storageQueueDataContrib
-  keyVaultSecretsUser
   cogServicesContrib
   aiSearchContrib
   searchServiceContrib

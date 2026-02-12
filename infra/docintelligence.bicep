@@ -1,8 +1,5 @@
 param docIntelAccountName string 
-param keyVaultName string
 param location string = resourceGroup().location
-
-var kvKeys = loadJsonContent('./kvKeys.json')
 
 resource docIntelAccount 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
   name: docIntelAccountName
@@ -14,22 +11,12 @@ resource docIntelAccount 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
   sku: {
     name: 'S0'
   }
-  properties:{
-    
+ properties: {
+   publicNetworkAccess: 'Enabled'
+   disableLocalAuth: true
+   customSubDomainName: docIntelAccountName
   }
 }
 
-resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' existing = {
-  name: keyVaultName
-}
-
-resource adminKey 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
-  parent: keyVault
-  name: kvKeys.DOCUMENTINTELLIGENCE_KEY
-  properties: {
-    value:  docIntelAccount.listKeys().key1
-  }
-}
 output docIntelPrincipalId string = docIntelAccount.identity.principalId
 output docIntelEndpoint string = docIntelAccount.properties.endpoint
-

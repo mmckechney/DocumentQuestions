@@ -12,7 +12,9 @@ hooks:
   preup: 
     - shell: pwsh
       run: ./scripts/preup.ps1
+      interactive: true
 
   postdeploy:
     - shell: pwsh
       run: ./scripts/postdeploy.ps1
+      interactive: true

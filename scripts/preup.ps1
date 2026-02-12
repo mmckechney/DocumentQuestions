@@ -21,7 +21,6 @@ azd env set "AZURE_STORAGEACCT_NAME" "$($safeEnvName)storage"
 azd env set "AZURE_DOCUMENTINTELLIGENCE_ACCOUNT_NAME" "$envName-aidoc"
 azd env set "AZURE_AISEARCH_NAME" "$envName-aisearch"
 azd env set "AZURE_AIFOUNDRY_NAME" "$envName-aifoundry"
-azd env set "AZURE_KEYVAULT_NAME" "$envName-keyvault"
 azd env set "AZURE_APPINSIGHTS_NAME" "$envName-appinsights"
 
 

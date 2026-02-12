@@ -9,6 +9,12 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   sku: {
     name: 'Standard_LRS'
   }
+  properties: {
+    publicNetworkAccess: 'Enabled'
+    networkAcls: {
+      defaultAction: 'Allow'
+    }
+  }
 }
 
 resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2021-06-01' = {

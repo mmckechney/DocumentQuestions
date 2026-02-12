@@ -35,18 +35,15 @@ namespace DocumentQuestions.Library
       private SearchIndexClient indexClient;
       private EmbeddingClient embeddingClient;
       private Uri searchEndpointUri;
-      private AzureKeyCredential searchCredential;
       public AiSearch(ILogger<AiSearch> log, IConfiguration config)
       {
          this.log = log;
          this.config = config;
          string endpoint = config[Constants.AISEARCH_ENDPOINT] ?? throw new ArgumentException($"Missing {Constants.AISEARCH_ENDPOINT} in configuration");
          this.searchEndpointUri = new Uri(endpoint);
-         string key = config[Constants.AISEARCH_KEY] ?? throw new ArgumentException($"Missing {Constants.AISEARCH_KEY} in configuration");
 
          // Create a client
-         this.searchCredential = new AzureKeyCredential(key);
-         indexClient = new SearchIndexClient(searchEndpointUri, searchCredential);
+         indexClient = new SearchIndexClient(searchEndpointUri, new DefaultAzureCredential());
 
 
          var embeddingModel = config[Constants.OPENAI_EMBEDDING_MODEL_NAME] ?? throw new ArgumentException($"Missing {Constants.OPENAI_EMBEDDING_MODEL_NAME} in configuration.");
@@ -76,7 +73,7 @@ namespace DocumentQuestions.Library
          await this.AddIndex(AiSearch.IndexName);
          log.LogInformation($"Storing memory to AI Search index '{AiSearch.IndexName}'...");
 
-         var client = new SearchClient(searchEndpointUri, AiSearch.IndexName, this.searchCredential);
+         var client = new SearchClient(searchEndpointUri, AiSearch.IndexName, new DefaultAzureCredential());
 
          var documents = new List<SearchDocument>();
          var index = 0;
@@ -123,7 +120,7 @@ namespace DocumentQuestions.Library
             log.LogDebug("FileName Filter: {FileName}\n", fileName);
 
             // Use the general index, not the fileName as the index name
-            var client = new SearchClient(searchEndpointUri, AiSearch.IndexName, this.searchCredential);
+            var client = new SearchClient(searchEndpointUri, AiSearch.IndexName, new DefaultAzureCredential());
 
             var embedding = await embeddingGenerator!.GenerateAsync(query, cancellationToken: cancellationToken).ConfigureAwait(false);
             var vectorQuery = new VectorizedQuery(embedding.Vector.ToArray())
@@ -364,7 +361,7 @@ namespace DocumentQuestions.Library
          options.Facets.Add($"fileName,count:{maxDistinct}");
 
          // Use "*" to match all docs (subject to filter)
-         var client = new SearchClient(searchEndpointUri, AiSearch.IndexName, this.searchCredential);
+         var client = new SearchClient(searchEndpointUri, AiSearch.IndexName, new DefaultAzureCredential());
          var response = await client.SearchAsync<SearchDocument>("*", options);
 
          // Extract distinct values from the facet results

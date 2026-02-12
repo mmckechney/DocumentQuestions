@@ -4,7 +4,6 @@ targetScope = 'subscription'
 @description('Primary location for all resources')
 param location string
 param resourceGroupName string
-param keyVaultName string
 param storageAccountName string
 param docIntelligenceAccountName string
 param aiSearchName string
@@ -17,18 +16,6 @@ var safeStorageAccountName = toLower(replace(storageAccountName, '-', ''))
 resource rg 'Microsoft.Resources/resourceGroups@2022-09-01' = {
     name: resourceGroupName
     location: location
-}
-
-module keyVault 'keyvault.bicep' = {
-    name: 'keyVault'
-    scope: resourceGroup(resourceGroupName)
-    params: {
-        location: location
-        keyVaultName: keyVaultName
-    }
-    dependsOn: [
-        rg
-    ]
 }
 
 module appInsights 'appinsights.bicep' = {
@@ -64,11 +51,9 @@ module aiSearch 'aisearch.bicep' = {
     params: {
         aiSearchName: aiSearchName
         location: location
-        keyVaultName: keyVaultName
     }
     dependsOn: [
         rg
-        keyVault
     ]
 }
 module docIntelligence 'docintelligence.bicep' = {
@@ -77,11 +62,9 @@ module docIntelligence 'docintelligence.bicep' = {
     params: {
         docIntelAccountName: docIntelligenceAccountName
         location: location
-        keyVaultName: keyVaultName
     }
     dependsOn: [
         rg
-        keyVault
     ]
 }
 module storageResources 'storage.bicep' = {
@@ -93,7 +76,6 @@ module storageResources 'storage.bicep' = {
     }
     dependsOn: [
         rg
-        keyVault
     ]
 }
 

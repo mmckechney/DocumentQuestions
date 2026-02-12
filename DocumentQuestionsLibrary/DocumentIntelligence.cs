@@ -1,5 +1,6 @@
 ﻿using Azure;
 using Azure.AI.DocumentIntelligence;
+using Azure.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -38,8 +39,7 @@ namespace DocumentQuestions.Library
          try
          {
             var endpoint = config.GetValue<Uri>(Constants.DOCUMENTINTELLIGENCE_ENDPOINT) ?? throw new ArgumentException($"Missing {Constants.DOCUMENTINTELLIGENCE_ENDPOINT} in configuration");
-            var key = config.GetValue<string>(Constants.DOCUMENTINTELLIGENCE_KEY) ?? throw new ArgumentException($"Missing {Constants.DOCUMENTINTELLIGENCE_KEY} in configuration");
-            this.docIntelClient = new DocumentIntelligenceClient(endpoint, new AzureKeyCredential(key));
+            this.docIntelClient = new DocumentIntelligenceClient(endpoint, new DefaultAzureCredential());
          }
          catch (Exception exe)
          {

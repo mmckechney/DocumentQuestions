@@ -42,6 +42,14 @@ namespace DocumentQuestions.Console
          var clearIndexCommand = new Command("clear-index", "Clears the index of all records");
          clearIndexCommand.Handler = CommandHandler.Create(Worker.ClearIndex);
 
+         var askAllArg = new Argument<string[]>("question", "Question to ask across all documents") { Arity = ArgumentArity.ZeroOrMore };
+         var askAllCommand = new Command("ask-all", "Ask a question across all indexed documents");
+         askAllCommand.Add(askAllArg);
+         askAllCommand.Handler = CommandHandler.Create<string[]>(Worker.AskAllDocuments);
+
+         var summarizeCommand = new Command("summarize", "Summarize the active document");
+         summarizeCommand.Handler = CommandHandler.Create(Worker.SummarizeDocument);
+
          RootCommand rootCommand = new RootCommand(description: $"Utility to ask questions on documents that have been indexed in Azure AI Search");
          rootCommand.Add(questionArg);
          rootCommand.Handler = CommandHandler.Create<string[]>(Worker.AskQuestion);
@@ -50,6 +58,8 @@ namespace DocumentQuestions.Console
          rootCommand.Add(processFileCommand);
          rootCommand.Add(listCommand);
          rootCommand.Add(clearIndexCommand);
+         rootCommand.Add(askAllCommand);
+         rootCommand.Add(summarizeCommand);
 
          var parser = new CommandLineBuilder(rootCommand)
               .UseDefaults()

@@ -178,6 +178,64 @@ namespace DocumentQuestions.Library
          return searchResult;
       }
 
+      [Description("Searches AI Search index across all documents for the provided query.")]
+      public IReadOnlyList<SemanticMemoryResult> SearchAllDocumentsAsync([Description("The search query.")] string query, CancellationToken cancellationToken = default)
+      {
+         var searchResult = Task.Run(async () =>
+         {
+            log.LogDebug("\nCross-Doc Query: {Query}\n", query);
+
+            var client = new SearchClient(searchEndpointUri, AiSearch.IndexName, new DefaultAzureCredential());
+
+            var embedding = await embeddingGenerator!.GenerateAsync(query, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var vectorQuery = new VectorizedQuery(embedding.Vector.ToArray())
+            {
+               KNearestNeighborsCount = MaxItemReturnCount,
+               Fields = { VectorFieldName }
+            };
+
+            var options = new SearchOptions
+            {
+               Size = MaxItemReturnCount,
+               QueryType = SearchQueryType.Semantic,
+               VectorSearch = new VectorSearchOptions(),
+               SemanticSearch = new SemanticSearchOptions
+               {
+                  SemanticConfigurationName = "semantics",
+                  QueryCaption = new QueryCaption(QueryCaptionType.Extractive),
+                  QueryAnswer = new QueryAnswer(QueryAnswerType.Extractive)
+               },
+               Debug = new QueryDebugMode()
+            };
+
+            // No fileName filter — search across all documents
+            options.VectorSearch.Queries.Add(vectorQuery);
+            options.Select.Add(IdFieldName);
+            options.Select.Add(ContentFieldName);
+            options.Select.Add(FileNameFieldName);
+            options.IncludeTotalCount = true;
+
+            var response = await client.SearchAsync<SearchDocument>(null, options, cancellationToken).ConfigureAwait(false);
+
+            var results = new List<SemanticMemoryResult>();
+            await foreach (var result in response.Value.GetResultsAsync().WithCancellation(cancellationToken).ConfigureAwait(false))
+            {
+               var content = result.Document.TryGetValue(ContentFieldName, out var textObj) ? textObj as string : null;
+               var fileNameValue = result.Document.TryGetValue(FileNameFieldName, out var fileObj) ? fileObj as string : null;
+               var id = result.Document.TryGetValue(IdFieldName, out var idObj) ? idObj as string : null;
+               results.Add(new SemanticMemoryResult(id, fileNameValue, content, result.Score));
+
+               log.LogDebug("Cross-Doc Result {Index}:\n  Id: {Id}\n  File: {File}\n  Score: {Score}", results.Count, id, fileNameValue, result.Score);
+            }
+
+            log.LogDebug("Found {Count} cross-document results", results.Count);
+            log.LogDebug("----------------------");
+            return results;
+         }).GetAwaiter().GetResult();
+
+         return searchResult;
+      }
+
       public async Task<List<string>> ListAvailableIndexes(bool unquoted = false)
       {
          try

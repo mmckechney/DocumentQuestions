@@ -17,9 +17,44 @@ This solution provides an example of how to process your own documents and then 
 
 
 - A console app to easily run and test locally with the following commands:
-    - *process* - to process a file through document intelligence, then create embeddings and add the file to [Azure AI Search](https://learn.microsoft.com/en-us/azure/search/search-what-is-azure-search)
+    - *process* - to process a file through document intelligence, then create embeddings and add the file to [Azure AI Search](https://learn.microsoft.com/en-us/azure/search/search-what-is-azure-search). Automatically generates a summary after indexing.
     - *doc* - to set the active document you want to ask questions about
-    - *ask* - to ask you questions 
+    - *ask* - to ask questions (routes through an intelligent Router Agent that delegates to the appropriate specialist agent)
+    - *ask-all* - to ask questions across all indexed documents without needing to set an active document
+    - *summarize* - to get a summary of the active document
+
+### Multi-Agent Architecture
+
+This solution uses the [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview) to orchestrate multiple specialized AI agents:
+
+- **Router Agent** - Analyzes user intent and delegates to the appropriate specialist agent
+- **AskQuestions Agent** - Answers questions about a specific document
+- **CrossDocument Agent** - Searches across all indexed documents to answer questions
+- **Summarizer Agent** - Generates concise summaries of document content
+
+```
+User types at "dq> " prompt
+         │
+         ▼
+    ┌───────────┐
+    │  Worker   │  Parses command via System.CommandLine
+    └────┬──────┘
+         │
+    ┌────┴──────────────────────────────────────────┐
+    │         │           │          │              │
+   ask     ask-all    summarize   process      doc/list/etc
+    │         │           │          │
+    ▼         ▼           ▼          ▼
+  Router   CrossDoc   Summarizer  DocIntelligence
+  Agent    Agent      Agent       → then Summarizer
+    │
+    │ (tool-calling: picks one based on intent)
+    ├──→ AskSingleDocument   → AiSearch.SearchIndexAsync (filtered by doc)
+    ├──→ AskCrossDocument    → AiSearch.SearchAllDocumentsAsync (all docs)
+    └──→ SummarizeDocument   → AiSearch.SearchIndexAsync (overview query)
+```
+
+![ Architecture Diagram ](images/Architecture-console.png)
 
 ## Getting Started
 

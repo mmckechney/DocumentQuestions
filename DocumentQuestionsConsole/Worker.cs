@@ -24,6 +24,8 @@ namespace DocumentQuestions.Console
       private static string activeDocument = string.Empty;
       private static AiSearch aiSearch;
       private static AgentSession? currentSession = null; // Session for multi-turn conversations
+      private static AgentSession? crossDocSession = null; // Session for cross-document conversations
+      private static AgentSession? routerSession = null; // Session for router conversations
 
 
 
@@ -50,11 +52,54 @@ namespace DocumentQuestions.Console
          syS.Console.WriteLine("----------------------");
 
          StringBuilder responseBuilder = new();
-         await foreach (var (text, session) in agentUtility.AskQuestionStreamingWithThread(quest, activeDocument, currentSession))
+         await foreach (var (text, session) in agentUtility.RouteQuestionStreamingAsync(quest, activeDocument, routerSession))
          {
             syS.Console.Write(text);
             responseBuilder.Append(text);
-            currentSession = session; // Update session for next question
+            routerSession = session;
+         }
+
+         syS.Console.WriteLine("----------------------");
+         syS.Console.WriteLine();
+      }
+
+      internal static async Task AskAllDocuments(string[] question)
+      {
+         if (question == null || question.Length == 0)
+         {
+            return;
+         }
+
+         string quest = string.Join(" ", question);
+         syS.Console.WriteLine("----------------------");
+
+         StringBuilder responseBuilder = new();
+         await foreach (var (text, session) in agentUtility.AskCrossDocumentStreamingAsync(quest, crossDocSession))
+         {
+            syS.Console.Write(text);
+            responseBuilder.Append(text);
+            crossDocSession = session;
+         }
+
+         syS.Console.WriteLine("----------------------");
+         syS.Console.WriteLine();
+      }
+
+      internal static async Task SummarizeDocument()
+      {
+         if (string.IsNullOrWhiteSpace(activeDocument))
+         {
+            log.LogInformation("Please set an active document using the 'doc' command before summarizing.", ConsoleColor.Yellow);
+            return;
+         }
+
+         syS.Console.WriteLine("----------------------");
+
+         StringBuilder responseBuilder = new();
+         await foreach (var (text, session) in agentUtility.SummarizeDocumentStreamingAsync(activeDocument))
+         {
+            syS.Console.Write(text);
+            responseBuilder.Append(text);
          }
 
          syS.Console.WriteLine("----------------------");
@@ -64,6 +109,8 @@ namespace DocumentQuestions.Console
       internal static Task ResetConversation()
       {
          currentSession = null;
+         crossDocSession = null;
+         routerSession = null;
          log.LogInformation("Conversation session reset. Starting fresh conversation.", ConsoleColor.Green);
          return Task.CompletedTask;
       }
@@ -130,6 +177,7 @@ namespace DocumentQuestions.Console
          var docName = string.Join(" ", document);
          activeDocument = docName;
          Worker.currentSession = null;
+         Worker.routerSession = null;
       }
 
       protected async override Task ExecuteAsync(CancellationToken stoppingToken)

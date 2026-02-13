@@ -41,6 +41,8 @@ namespace DocumentQuestions.Console
          aiSearch = aiSrch;
       }
 
+      private static readonly string[] exitCommands = ["exit", "quit", "done", "back", "q"];
+
       internal static async Task AskQuestion(string[] question)
       {
          if (question == null || question.Length == 0)
@@ -59,8 +61,8 @@ namespace DocumentQuestions.Console
             routerSession = session;
          }
 
-         syS.Console.WriteLine("----------------------");
          syS.Console.WriteLine();
+         syS.Console.WriteLine("----------------------");
       }
 
       internal static async Task AskAllDocuments(string[] question)
@@ -81,8 +83,8 @@ namespace DocumentQuestions.Console
             crossDocSession = session;
          }
 
-         syS.Console.WriteLine("----------------------");
          syS.Console.WriteLine();
+         syS.Console.WriteLine("----------------------");
       }
 
       internal static async Task SummarizeDocument()
@@ -100,6 +102,29 @@ namespace DocumentQuestions.Console
          {
             syS.Console.Write(text);
             responseBuilder.Append(text);
+            currentSession = session;
+         }
+
+         syS.Console.WriteLine();
+         syS.Console.WriteLine("----------------------");
+      }
+
+      internal static async Task SearchAndSummarize(string[] question)
+      {
+         if (question == null || question.Length == 0)
+         {
+            return;
+         }
+
+         string quest = string.Join(" ", question);
+         syS.Console.WriteLine("----------------------");
+         log.LogInformation("Running sequential workflow: CrossDocument → Summarizer", ConsoleColor.DarkCyan);
+
+         StringBuilder responseBuilder = new();
+         await foreach (var text in agentUtility.SearchAndSummarizeStreamingAsync(quest))
+         {
+            syS.Console.Write(text);
+            responseBuilder.Append(text);
          }
 
          syS.Console.WriteLine("----------------------");
@@ -113,6 +138,38 @@ namespace DocumentQuestions.Console
          routerSession = null;
          log.LogInformation("Conversation session reset. Starting fresh conversation.", ConsoleColor.Green);
          return Task.CompletedTask;
+      }
+
+      /// <summary>
+      /// Enters a conversation loop, prompting for follow-up questions.
+      /// Type 'exit', 'quit', 'done', 'back', or 'q' to return to the main dq> prompt.
+      /// </summary>
+      private static async Task ConversationLoop(Func<string, Task> sendFollowUp)
+      {
+         syS.Console.WriteLine();
+         log.LogInformation("Conversation mode - type follow-up questions or 'exit' to return to dq> prompt", ConsoleColor.DarkCyan);
+
+         while (true)
+         {
+            syS.Console.WriteLine();
+            syS.Console.Write("  >> ");
+            var line = syS.Console.ReadLine();
+            if (line == null || exitCommands.Contains(line.Trim().ToLower()))
+            {
+               log.LogInformation("Exiting conversation mode.", ConsoleColor.DarkCyan);
+               return;
+            }
+
+            if (string.IsNullOrWhiteSpace(line))
+            {
+               continue;
+            }
+
+            syS.Console.WriteLine("----------------------");
+            await sendFollowUp(line);
+            syS.Console.WriteLine();
+            syS.Console.WriteLine("----------------------");
+         }
       }
 
 
@@ -226,7 +283,53 @@ namespace DocumentQuestions.Console
             {
                return;
             }
-            val = await rootParser.InvokeAsync(line);
+
+            // Handle conversation-capable commands directly so we can properly await and enter conversation mode
+            var trimmed = line.Trim();
+            if (trimmed.StartsWith("ask-all ", StringComparison.OrdinalIgnoreCase))
+            {
+               var q = trimmed.Substring(8).Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+               await AskAllDocuments(q);
+               await ConversationLoop(async (followUp) =>
+               {
+                  await foreach (var (text, session) in agentUtility.AskCrossDocumentStreamingAsync(followUp, crossDocSession))
+                  {
+                     syS.Console.Write(text);
+                     crossDocSession = session;
+                  }
+               });
+            }
+            else if (trimmed.StartsWith("ask ", StringComparison.OrdinalIgnoreCase))
+            {
+               var q = trimmed.Substring(4).Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+               await AskQuestion(q);
+               await ConversationLoop(async (followUp) =>
+               {
+                  await foreach (var (text, session) in agentUtility.RouteQuestionStreamingAsync(followUp, activeDocument, routerSession))
+                  {
+                     syS.Console.Write(text);
+                     routerSession = session;
+                  }
+               });
+            }
+            else if (trimmed.Contains("summarize", StringComparison.OrdinalIgnoreCase))
+            {
+               await SummarizeDocument();
+               await ConversationLoop(async (followUp) =>
+               {
+                  await foreach (var (text, session) in agentUtility.SummarizeDocumentStreamingAsync(activeDocument, currentSession))
+                  {
+                     syS.Console.Write(text);
+                     currentSession = session;
+                  }
+               });
+            }
+            else
+            {
+               // All other commands go through System.CommandLine as before
+               val = await rootParser.InvokeAsync(line);
+            }
+
             firstPass = false;
          }
       }

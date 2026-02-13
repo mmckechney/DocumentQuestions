@@ -2,11 +2,13 @@
 using Azure.AI.Projects.OpenAI;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.AzureAI;
+using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Trace;
 using System.ComponentModel;
+using System.Text;
 
 
 namespace DocumentQuestions.Library
@@ -59,9 +61,9 @@ namespace DocumentQuestions.Library
 Your job is to analyze the user's request and delegate it to the appropriate specialist agent using the tools available to you.
 
 You have three tools available:
-1. ask_single_document - Use when the user asks a question about a specific document and an active document is set.
-2. ask_cross_document - Use when the user wants to search across all documents, or when no specific document is mentioned.
-3. summarize_document - Use when the user asks for a summary or overview of a document.
+1. ask_single_document - Delegates to the AskQuestions specialist agent for questions about a specific document.
+2. ask_cross_document - Delegates to the CrossDocument specialist agent for questions spanning all documents.
+3. summarize_document - Delegates to the Summarizer specialist agent for document summaries.
 
 Rules:
 - If the user says ""summarize"", ""summary"", or ""overview"", use the summarize_document tool.
@@ -286,29 +288,107 @@ Rules:
          }
       }
 
-      // Router tool delegate methods
-      [Description("Ask a question about a specific document. Use when the user asks about their active document.")]
+      /// <summary>
+      /// Sequential agent-to-agent workflow: CrossDocument agent searches across all docs,
+      /// then Summarizer agent condenses the findings into a concise answer.
+      /// Uses AgentWorkflowBuilder.BuildSequential for true multi-agent orchestration.
+      /// </summary>
+      public async IAsyncEnumerable<string> SearchAndSummarizeStreamingAsync(string question)
+      {
+         log.LogDebug("Running sequential workflow: CrossDocument → Summarizer...");
+
+         var workflow = AgentWorkflowBuilder.BuildSequential("SearchAndSummarize", [crossDocumentAgent, summarizerAgent]);
+
+         var messages = new List<ChatMessage>
+         {
+            new() { Contents = [new TextContent(question)], Role = ChatRole.User }
+         };
+
+         StreamingRun run = await InProcessExecution.StreamAsync(workflow, messages);
+         await run.TrySendMessageAsync(new TurnToken(emitEvents: true));
+
+         await foreach (WorkflowEvent evt in run.WatchStreamAsync().ConfigureAwait(false))
+         {
+            if (evt is AgentResponseUpdateEvent e && e.Data != null)
+            {
+               yield return e.Data.ToString();
+            }
+            else if (evt is WorkflowOutputEvent)
+            {
+               break;
+            }
+         }
+      }
+
+      // Router tool delegate methods — these invoke the actual specialist agents (true agent-to-agent delegation)
+      [Description("Delegates to the AskQuestions specialist agent to answer a question about a specific document.")]
       private string AskSingleDocumentForRouter([Description("The question to ask")] string question, [Description("The document name")] string documentName)
       {
-         var results = aiSearchAdmin.SearchIndexAsync(documentName, question);
-         if (results.Count == 0) return "No relevant information found in the specified document.";
-         return string.Join("\n\n", results.Select(r => $"[{r.FileName}]: {r.Content}"));
+         log.LogDebug("Router delegating to AskQuestions agent for document: {Document}", documentName);
+         var session = askQuestionsAgent.CreateSessionAsync().GetAwaiter().GetResult();
+         string userMessage = $"Document Name:\n{documentName}\n\nQuestion: {question}";
+
+         StringBuilder responseBuilder = new();
+         var updates = askQuestionsAgent.RunStreamingAsync(
+            new ChatMessage() { Contents = [new TextContent(userMessage)], Role = ChatRole.User }, session);
+
+         // Collect the full response from the specialist agent
+         var enumerator = updates.GetAsyncEnumerator();
+         while (enumerator.MoveNextAsync().AsTask().GetAwaiter().GetResult())
+         {
+            if (enumerator.Current.Text != null)
+            {
+               responseBuilder.Append(enumerator.Current.ToString());
+            }
+         }
+
+         return responseBuilder.Length > 0 ? responseBuilder.ToString() : "The AskQuestions agent could not find an answer.";
       }
 
-      [Description("Search across all available documents to answer a question. Use when no specific document is mentioned or user wants cross-document answers.")]
+      [Description("Delegates to the CrossDocument specialist agent to search across all documents and answer a question.")]
       private string AskCrossDocumentForRouter([Description("The question to ask")] string question)
       {
-         var results = aiSearchAdmin.SearchAllDocumentsAsync(question);
-         if (results.Count == 0) return "No relevant information found across any documents.";
-         return string.Join("\n\n", results.Select(r => $"[{r.FileName}]: {r.Content}"));
+         log.LogDebug("Router delegating to CrossDocument agent...");
+         var session = crossDocumentAgent.CreateSessionAsync().GetAwaiter().GetResult();
+         string userMessage = $"Question: {question}";
+
+         StringBuilder responseBuilder = new();
+         var updates = crossDocumentAgent.RunStreamingAsync(
+            new ChatMessage() { Contents = [new TextContent(userMessage)], Role = ChatRole.User }, session);
+
+         var enumerator = updates.GetAsyncEnumerator();
+         while (enumerator.MoveNextAsync().AsTask().GetAwaiter().GetResult())
+         {
+            if (enumerator.Current.Text != null)
+            {
+               responseBuilder.Append(enumerator.Current.ToString());
+            }
+         }
+
+         return responseBuilder.Length > 0 ? responseBuilder.ToString() : "The CrossDocument agent could not find an answer.";
       }
 
-      [Description("Summarize a specific document. Use when the user asks for a summary or overview.")]
+      [Description("Delegates to the Summarizer specialist agent to summarize a specific document.")]
       private string SummarizeDocumentForRouter([Description("The document name to summarize")] string documentName)
       {
-         var results = aiSearchAdmin.SearchIndexAsync(documentName, "provide a comprehensive overview and summary of the entire document");
-         if (results.Count == 0) return "No content found for the specified document.";
-         return string.Join("\n\n", results.Select(r => $"[{r.FileName}]: {r.Content}"));
+         log.LogDebug("Router delegating to Summarizer agent for document: {Document}", documentName);
+         var session = summarizerAgent.CreateSessionAsync().GetAwaiter().GetResult();
+         string userMessage = $"Document Name:\n{documentName}\n\nPlease provide a comprehensive summary of this document.";
+
+         StringBuilder responseBuilder = new();
+         var updates = summarizerAgent.RunStreamingAsync(
+            new ChatMessage() { Contents = [new TextContent(userMessage)], Role = ChatRole.User }, session);
+
+         var enumerator = updates.GetAsyncEnumerator();
+         while (enumerator.MoveNextAsync().AsTask().GetAwaiter().GetResult())
+         {
+            if (enumerator.Current.Text != null)
+            {
+               responseBuilder.Append(enumerator.Current.ToString());
+            }
+         }
+
+         return responseBuilder.Length > 0 ? responseBuilder.ToString() : "The Summarizer agent could not produce a summary.";
       }
    }
 

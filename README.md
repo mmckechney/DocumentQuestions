@@ -17,9 +17,52 @@ This solution provides an example of how to process your own documents and then 
 
 
 - A console app to easily run and test locally with the following commands:
-    - *process* - to process a file through document intelligence, then create embeddings and add the file to [Azure AI Search](https://learn.microsoft.com/en-us/azure/search/search-what-is-azure-search)
+    - *process* - to process a file through document intelligence, then create embeddings and add the file to [Azure AI Search](https://learn.microsoft.com/en-us/azure/search/search-what-is-azure-search). Automatically generates a summary after indexing.
     - *doc* - to set the active document you want to ask questions about
-    - *ask* - to ask you questions 
+    - *ask* - to ask questions (routes through an intelligent Router Agent that delegates to the appropriate specialist agent)
+    - *ask-all* - to ask questions across all indexed documents without needing to set an active document
+    - *summarize* - to get a summary of the active document
+    - *search-and-summarize* - sequential agent workflow that searches across all documents then summarizes the findings (CrossDocument → Summarizer pipeline)
+
+### Multi-Agent Architecture
+
+This solution uses the [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview) to orchestrate multiple specialized AI agents with true agent-to-agent communication:
+
+- **Router Agent** - Analyzes user intent and delegates to the appropriate specialist agent (agent-to-agent via tool-calling)
+- **AskQuestions Agent** - Answers questions about a specific document
+- **CrossDocument Agent** - Searches across all indexed documents to answer questions
+- **Summarizer Agent** - Generates concise summaries of document content
+
+#### Agent-to-Agent Workflows
+
+1. **Router → Specialist delegation** (`ask` command): The Router Agent's tools invoke the actual specialist `AIAgent` instances, collecting their full responses. The Router then passes the specialist's answer back to the user.
+
+2. **Sequential pipeline** (`search-and-summarize` command): Uses `AgentWorkflowBuilder.BuildSequential` to chain the CrossDocument agent → Summarizer agent. The CrossDocument agent searches across all documents first, then its output flows as input to the Summarizer agent which condenses the findings.
+
+```
+User types at "dq> " prompt
+         │
+         ▼
+    ┌───────────┐
+    │  Worker   │  Parses command via System.CommandLine
+    └────┬──────┘
+         │
+    ┌────┴──────────────────────────────────────────────────────┐
+    │         │           │                    │                │
+   ask     ask-all    summarize     search-and-summarize    process
+    │         │           │                    │                │
+    ▼         ▼           ▼                    ▼                ▼
+  Router   CrossDoc   Summarizer    ┌─── Sequential ───┐   DocIntel
+  Agent    Agent      Agent         │ CrossDoc agent    │   → then
+    │                               │     ▼ (output)   │   Summarizer
+    │ (tool-calling)                │ Summarizer agent  │
+    │ invokes actual agents:        └───────────────────┘
+    ├──→ AskQuestions Agent
+    ├──→ CrossDocument Agent
+    └──→ Summarizer Agent
+```
+
+![ Architecture Diagram ](images/Architecture-console.png)
 
 ## Getting Started
 

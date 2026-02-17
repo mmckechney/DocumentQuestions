@@ -3,6 +3,7 @@ using Azure.AI.DocumentIntelligence;
 using Azure.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Text;
 
 namespace DocumentQuestions.Library
 {
@@ -99,6 +100,29 @@ namespace DocumentQuestions.Library
             log.LogInformation($"Saving Document Intelligence results to Azure AI Search Index...");
             taskList.Add(aiSearch.StoreDataInIndex(AiSearch.IndexName, fileName, chunked));
             Task.WaitAll(taskList.ToArray());
+
+            // Auto-summarize the document after indexing
+            log.LogInformation($"Generating document summary...");
+            try
+            {
+               StringBuilder summaryBuilder = new();
+               await foreach (var (text, session) in agentUtility.SummarizeDocumentStreamingAsync(fileName))
+               {
+                  summaryBuilder.Append(text);
+               }
+
+               if (summaryBuilder.Length > 0)
+               {
+                  var summaryChunked = TextChunker.SplitPlainTextParagraphs(
+                     summaryBuilder.ToString().Split("\n").ToList(), AiSearch.EmbeddingChunkSize);
+                  await aiSearch.StoreDataInIndex(AiSearch.IndexName, $"summary-{fileName}", summaryChunked);
+                  log.LogInformation($"Document summary generated and indexed.");
+               }
+            }
+            catch (Exception exe)
+            {
+               log.LogWarning($"Auto-summarization completed with warning: {exe.Message}");
+            }
          }
          log.LogInformation("Document Processed and Indexed");
 

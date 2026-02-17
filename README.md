@@ -52,17 +52,15 @@ User types at "dq> " prompt
    ask     ask-all    summarize     search-and-summarize    process
     │         │           │                    │                │
     ▼         ▼           ▼                    ▼                ▼
-  Router   CrossDoc   Summarizer    ┌─── Sequential ───┐   DocIntel
+  Router   CrossDoc   Summarizer    ┌─── Sequential ────┐   DocIntel
   Agent    Agent      Agent         │ CrossDoc agent    │   → then
-    │                               │     ▼ (output)   │   Summarizer
+    │                               │     ▼ (output)    │   Summarizer
     │ (tool-calling)                │ Summarizer agent  │
     │ invokes actual agents:        └───────────────────┘
     ├──→ AskQuestions Agent
     ├──→ CrossDocument Agent
     └──→ Summarizer Agent
 ```
-
-![ Architecture Diagram ](images/Architecture-console.png)
 
 ## Getting Started
 

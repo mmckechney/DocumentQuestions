@@ -159,7 +159,7 @@ Rules:
       private async Task<AIAgent?> GetFoundryAgent(string agentName, params AITool[] tools)
       {
 
-         var allAgents = new List<AgentRecord>();
+         var allAgents = new List<Azure.AI.Projects.Agents.AgentRecord>();
          await foreach (var a in foundryProjectClient.Agents.GetAgentsAsync())
          {
             allAgents.Add(a);
@@ -304,7 +304,7 @@ Rules:
             new() { Contents = [new TextContent(question)], Role = ChatRole.User }
          };
 
-         StreamingRun run = await InProcessExecution.StreamAsync(workflow, messages);
+         StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, messages);
          await run.TrySendMessageAsync(new TurnToken(emitEvents: true));
 
          await foreach (WorkflowEvent evt in run.WatchStreamAsync().ConfigureAwait(false))

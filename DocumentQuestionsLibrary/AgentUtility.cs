@@ -1,12 +1,13 @@
 ﻿using Azure.AI.Projects;
-using Azure.AI.Projects.OpenAI;
+using Azure.AI.Projects.Agents;
 using Microsoft.Agents.AI;
-using Microsoft.Agents.AI.AzureAI;
+using Microsoft.Agents.AI.Foundry;
 using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Trace;
+using System.ClientModel;
 using System.ComponentModel;
 using System.Text;
 
@@ -93,8 +94,7 @@ Rules:
 
       private void EnableAgentTelemteryAndMonitoring()
       {
-
-         var appInsightsConnectionString = foundryProjectClient.Telemetry.GetApplicationInsightsConnectionString();
+         // Telemetry is now configured via OpenTelemetry integration in agent builders
       }
 
       public async Task InitAgents()
@@ -104,93 +104,33 @@ Rules:
          // Initialize AskQuestions agent (single-document)
          var askAgentName = "AskQuestions";
          AITool askTool = AIFunctionFactory.Create(aiSearchAdmin.SearchIndexAsync);
-         askQuestionsAgent = await GetFoundryAgent(askAgentName, [askTool]);
-         if (askQuestionsAgent == null)
-         {
-            askQuestionsAgent = await CreateFoundryAgent(askAgentName, openAiChatDeploymentName, "Asks questions about the document", AskQuestionsInstructions, [askTool]);
-         }
-         if (askQuestionsAgent == null)
-         {
-            throw new NullReferenceException("The AskQuestions agent failed to initialize!");
-         }
+         askQuestionsAgent = await GetOrCreateAgent(askAgentName, openAiChatDeploymentName, "Asks questions about the document", AskQuestionsInstructions, askTool);
 
          // Initialize Summarizer agent
          var summarizerName = "Summarizer";
          AITool summarizerTool = AIFunctionFactory.Create(aiSearchAdmin.SearchIndexAsync);
-         summarizerAgent = await GetFoundryAgent(summarizerName, [summarizerTool]);
-         if (summarizerAgent == null)
-         {
-            summarizerAgent = await CreateFoundryAgent(summarizerName, openAiChatDeploymentName, "Summarizes document content", SummarizerInstructions, [summarizerTool]);
-         }
-         if (summarizerAgent == null)
-         {
-            throw new NullReferenceException("The Summarizer agent failed to initialize!");
-         }
+         summarizerAgent = await GetOrCreateAgent(summarizerName, openAiChatDeploymentName, "Summarizes document content", SummarizerInstructions, summarizerTool);
 
          // Initialize Cross-Document agent
          var crossDocName = "CrossDocument";
          AITool crossDocTool = AIFunctionFactory.Create(aiSearchAdmin.SearchAllDocumentsAsync);
-         crossDocumentAgent = await GetFoundryAgent(crossDocName, [crossDocTool]);
-         if (crossDocumentAgent == null)
-         {
-            crossDocumentAgent = await CreateFoundryAgent(crossDocName, openAiChatDeploymentName, "Answers questions across all documents", CrossDocumentInstructions, [crossDocTool]);
-         }
-         if (crossDocumentAgent == null)
-         {
-            throw new NullReferenceException("The CrossDocument agent failed to initialize!");
-         }
+         crossDocumentAgent = await GetOrCreateAgent(crossDocName, openAiChatDeploymentName, "Answers questions across all documents", CrossDocumentInstructions, crossDocTool);
 
          // Initialize Router agent with tools that delegate to specialist agents
          var routerName = "Router";
          AITool routerAskSingleTool = AIFunctionFactory.Create(AskSingleDocumentForRouter);
          AITool routerAskCrossTool = AIFunctionFactory.Create(AskCrossDocumentForRouter);
          AITool routerSummarizeTool = AIFunctionFactory.Create(SummarizeDocumentForRouter);
-         routerAgent = await GetFoundryAgent(routerName, [routerAskSingleTool, routerAskCrossTool, routerSummarizeTool]);
-         if (routerAgent == null)
-         {
-            routerAgent = await CreateFoundryAgent(routerName, openAiChatDeploymentName, "Routes questions to the appropriate specialist agent", RouterInstructions, [routerAskSingleTool, routerAskCrossTool, routerSummarizeTool]);
-         }
-         if (routerAgent == null)
-         {
-            throw new NullReferenceException("The Router agent failed to initialize!");
-         }
+         routerAgent = await GetOrCreateAgent(routerName, openAiChatDeploymentName, "Routes questions to the appropriate specialist agent", RouterInstructions, routerAskSingleTool, routerAskCrossTool, routerSummarizeTool);
       }
 
-      private async Task<AIAgent?> GetFoundryAgent(string agentName, params AITool[] tools)
-      {
-
-         var allAgents = new List<Azure.AI.Projects.Agents.AgentRecord>();
-         await foreach (var a in foundryProjectClient.Agents.GetAgentsAsync())
-         {
-            allAgents.Add(a);
-         }
-
-         // Filter by name
-         var named = allAgents
-            .Where(a => a.Name == agentName)
-            .ToList();
-
-         if (named.Count == 0)
-         {
-            return null;
-         }
-
-         //Need to add local tools each time you "get" the an existing agent
-         return (AIAgent)(await foundryProjectClient.GetAIAgentAsync(agentName, tools.ToList(), clientFactory: null, services: null))
-               .AsBuilder()
-               .UseOpenTelemetry(sourceName: Constants.TRACE_SOURCE_NAME, configure: cfg =>
-               {
-                  cfg.EnableSensitiveData = true;
-               })
-               .Build();
-      }
-
-      private async Task<AIAgent?>  CreateFoundryAgent(string name, string deployment, string description, string instructions, params AITool[] tools)
+      private async Task<AIAgent> GetOrCreateAgent(string agentName, string deployment, string description, string instructions, params AITool[] tools)
       {
          try
          {
-            var agent = await foundryProjectClient.CreateAIAgentAsync(name: name, model: deployment, instructions: instructions, description: description, tools: tools.ToList(), clientFactory: null, services: null);
-            return (AIAgent)agent
+            var record = await foundryProjectClient.AgentAdministrationClient.GetAgentAsync(agentName);
+            log.LogInformation("Found existing agent '{AgentName}'", agentName);
+            return (AIAgent)foundryProjectClient.AsAIAgent(agentRecord: record, tools: tools.ToList())
                .AsBuilder()
                .UseOpenTelemetry(sourceName: Constants.TRACE_SOURCE_NAME, configure: cfg =>
                {
@@ -198,10 +138,24 @@ Rules:
                })
                .Build();
          }
-         catch (Exception exe)
+         catch (Exception ex) when (
+            ex is ClientResultException crEx && crEx.Status == 404 ||
+            ex is Azure.RequestFailedException rfEx && rfEx.Status == 404 ||
+            ex is InvalidOperationException)
          {
-            log.LogError($"Failed to create Agent: {exe.ToString()}");
-            return null;
+            log.LogInformation("Agent '{AgentName}' not found, creating code-first agent", agentName);
+            return (AIAgent)foundryProjectClient.AsAIAgent(
+               model: deployment,
+               instructions: instructions,
+               name: agentName,
+               description: description,
+               tools: tools.ToList())
+               .AsBuilder()
+               .UseOpenTelemetry(sourceName: Constants.TRACE_SOURCE_NAME, configure: cfg =>
+               {
+                  cfg.EnableSensitiveData = true;
+               })
+               .Build();
          }
       }
 

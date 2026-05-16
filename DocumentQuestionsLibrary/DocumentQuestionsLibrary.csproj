@@ -16,18 +16,17 @@
 	<ItemGroup>
 		<PackageReference Include="Azure.AI.DocumentIntelligence" Version="1.0.0" />
 		<PackageReference Include="Azure.AI.OpenAI" Version="2.9.0-beta.1" />
-		<PackageReference Include="Azure.AI.Projects" Version="2.0.0-beta.2" />
-		<PackageReference Include="Azure.AI.Projects.OpenAI" Version="2.0.0-beta.1" />
-		<PackageReference Include="Azure.Identity" Version="1.19.0" />
+		<PackageReference Include="Azure.AI.Projects" Version="2.1.0-beta.2" />
+		<PackageReference Include="Azure.AI.Projects.Agents" Version="2.1.0-beta.2" />
+		<PackageReference Include="Azure.Identity" Version="1.21.0" />
 		<PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.6.0" />
 		<PackageReference Include="Azure.Search.Documents" Version="11.8.0-beta.1" />
 		<PackageReference Include="Azure.Storage.Blobs" Version="12.29.0-beta.1" />
 		<PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.4.1" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.5" />
-		<PackageReference Include="Microsoft.Agents.AI" Version="1.0.0-rc4" />
-		<!--<PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="1.0.0-preview.251114.1" />-->
-		<PackageReference Include="Microsoft.Agents.AI.AzureAI" Version="1.0.0-rc4" />
-		<PackageReference Include="Microsoft.Agents.AI.Workflows" Version="1.0.0-rc4" />
+		<PackageReference Include="Microsoft.Agents.AI" Version="1.6.1" />
+		<PackageReference Include="Microsoft.Agents.AI.Foundry" Version="1.6.1-preview.260514.1" />
+		<PackageReference Include="Microsoft.Agents.AI.Workflows" Version="1.6.1" />
 		<PackageReference Include="Microsoft.Extensions.AI" Version="10.4.1" />
 		<PackageReference Include="OpenAI" Version="2.9.1" />
 		<PackageReference Include="Microsoft.Azure.Cosmos" Version="3.58.0" />
@@ -40,7 +39,7 @@
 	</ItemGroup>
 
 	<!--<ItemGroup>
-	  <ProjectReference Include="..\Microsoft.Agents.AI.AzureAI\Microsoft.Agents.AI.AzureAI.csproj" />
+	  <ProjectReference Include="..\Microsoft.Agents.AI.Foundry\Microsoft.Agents.AI.Foundry.csproj" />
 	</ItemGroup>-->
 
 
